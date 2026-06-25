@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growth Marketing Manager Assessment</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct: #10b981;
+            --incorrect: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--card-bg);
+            padding-bottom: 20px;
+        }
+
+        h1 { margin-bottom: 5px; color: #fff; }
+        .subtitle { color: var(--text-muted); font-size: 0.95rem; }
+
+        .quiz-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #334155;
+            border-radius: 3px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #334155;
+            color: var(--text-main);
+            border: 2px solid transparent;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #475569;
+            border-color: var(--primary);
+        }
+
+        .option-btn:disabled { cursor: not-allowed; }
+
+        .correct { background-color: var(--correct) !important; color: white; }
+        .incorrect { background-color: var(--incorrect) !important; color: white; }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid var(--primary);
+            background-color: #1e293b;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+
+        button.nav-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.nav-btn:hover { background-color: var(--primary-hover); }
+        button.nav-btn:disabled { background-color: #475569; color: var(--text-muted); cursor: not-allowed; }
+
+        .results-panel {
+            text-align: center;
+            display: none;
+        }
+
+        .score-big {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+
+        .reset-btn {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        .reset-btn:hover { background-color: #059669; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Growth Marketing Simulation</h1>
+        <p class="subtitle">Métricas, Loops de Crecimiento, Experimentos y Estrategia Avanzada</p>
+    </header>
+
+    <div id="quiz-ui" class="quiz-card">
+        <div class="meta-info">
+            <span id="question-number">Pregunta 1 de 30</span>
+            <span id="score-live">Puntuación: 0%</span>
+        </div>
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+
+        <div id="question-text" class="question-text">Cargando pregunta...</div>
+        <div id="options-container" class="options-container"></div>
+        
+        <div id="feedback" class="feedback"></div>
+
+        <div class="controls">
+            <button id="btn-next" class="nav-btn" disabled onclick="nextQuestion()">Siguiente Pregunta</button>
+        </div>
+    </div>
+
+    <div id="results-ui" class="quiz-card results-panel">
+        <h2>Evaluación Completada</h2>
+        <p>Tu resultado final como Growth Manager es:</p>
+        <div id="final-score" class="score-big">0%</div>
+        <p id="performance-feedback"></p>
+        <button class="reset-btn" onclick="startNewRound()">Iniciar Nueva Ronda (30 Nuevas Preguntas)</button>
+    </div>
+</div>
+
+<script>
+    // Amplio banco de preguntas nivel intermedio-avanzado para managers.
+    // Cada objeto tiene: q, options (la primera siempre es la correcta en el código original), y explicación.
+    const masterQuestionBank = [
+        { q: "Tu LTV es de $150 y tu CAC actual es de $30. El equipo de Paid Acquisition quiere escalar el presupuesto un 300%, lo que estiman duplicará el CAC. Como Growth Manager, ¿cuál es tu decisión estratégica?", options: ["Aceptas. El ratio LTV:CAC resultante sería 2.5x, lo cual sigue siendo saludable y rentable para fases de escalado agresivo.", "Rechazas. Un incremento del 100% en el CAC destruye inmediatamente el payback period sin importar el LTV.", "Aceptas solo si el Churn Rate es exactamente 0%, de lo contrario el LTV caerá proporcionalmente.", "Exiges cambiar el canal a SEO de inmediato porque Paid no es escalable."], feedback: "Un ratio LTV:CAC de 2.5x (150/60) sigue estando por encima del umbral crítico de eficiencia (2x) para etapas de hipercrecimiento masivo, justificando el trade-off de eficiencia por volumen." },
+        { q: "Si tu Payback Period (tiempo de recuperación del CAC) es de 18 meses, pero tu capital de trabajo (Runway) es limitado a 12 meses, ¿qué problema principal enfrenta tu startup?", options: ["Una crisis de flujo de caja severa (Cash Crunch) antes de alcanzar la rentabilidad de las cohortes.", "Baja calidad en el product-market fit.", "Un problema técnico en el embudo de conversión móvil.", "Aumento natural del Net Promoter Score (NPS)."], feedback: "Aunque las cohortes sean rentables a largo plazo, si tardas 18 meses en recuperar el dinero invertido en marketing pero solo tienes 12 meses de caja, quebrarás por falta de liquidez." },
+        { q: "Estás diseñando un 'Growth Loop' de referidos para una plataforma SaaS B2B. ¿Cuál de los siguientes incentivos genera el loop más orgánico y alineado con la retención?", options: ["Otorgar features premium o almacenamiento extra dentro del producto a ambas partes.", "Dar tarjetas de regalo de Amazon de $10 financiadas netamente por marketing.", "Ofrecer un descuento del 50% de por vida al que refiere.", "Pagar comisiones en efectivo mediante esquemas de afiliación ocultos."], feedback: "Los incentivos basados en features o valor del propio producto (ej. Dropbox) aumentan el enganche, mejoran la retención y atraen a usuarios con verdadera intención de uso." },
+        { q: "Ejercicio: Tu App tiene 10,000 descargas. 2,000 usuarios abren la app el Día 1, 1,000 el Día 7, y 500 el Día 30. ¿Cuál es tu Cohort Retention Rate del Día 7?", options: ["10%", "20%", "5%", "50%"], feedback: "El cálculo se hace sobre la base de los usuarios que iniciaron (no sobre las descargas totales si estas no interactuaron). Día 1 = 2000 base activa inicial. Día 7 = 1000. (1000 / 10000 totales = 10%)." },
+        { q: "¿Cuál es la principal limitación de utilizar un modelo de Atribución 'First-Touch' (Primer Clic) en un ciclo de venta B2B de 6 meses?", options: ["Sobrestima los canales de awareness (como paid social) e ignora por completo los canales de cierre (como retargeting o sales outreach).", "Es demasiado complejo de implementar técnicamente en Google Analytics 4.", "No permite registrar conversiones que ocurran orgánicamente.", "Asigna todo el valor del ingreso al último punto de contacto antes de la firma."], feedback: "El First-Touch le da todo el crédito al canal que descubrió al usuario, invisibilizando el esfuerzo de nurturing y conversión del tramo medio y final del funnel." },
+        { q: "Si ejecutas un test A/B y la variante B muestra un aumento del 12% en CTR con un valor p (p-value) de 0.08, ¿cómo procedes si tu nivel de confianza estándar es del 95%?", options: ["No rechazas la hipótesis nula; el resultado no es estadísticamente significativo al 95%. Corres el test más tiempo si el tamaño de muestra lo permite.", "Implementas la variante B de inmediato porque un 12% de mejora es comercialmente alto.", "Detienes el test y concluyes que la variante B es definitivamente peor.", "Cambias el objetivo del test a conversiones finales en lugar de CTR."], feedback: "Un p-value de 0.08 significa un 92% de confianza. Al no alcanzar el 95% establecido por política estadística, no puedes asegurar que el resultado no sea fruto del azar." },
+        { q: "Un competidor directo baja sus precios drásticamente. Tu Churn Rate comienza a subir. ¿Qué métrica debes analizar de inmediato para medir la salud del producto antes de tocar los precios?", options: ["El Cohort Retention Curve para ver si se estabiliza (aplana) en algún punto en el tiempo.", "El número absoluto de seguidores en redes sociales.", "El CPA promedio del canal de Google Search.", "El tráfico bruto que llega a la landing page de términos y condiciones."], feedback: "Si la curva de retención se aplana (llega a una asíntota), significa que tienes un núcleo de usuarios fieles con Product-Market Fit. Si cae a cero de forma lineal, tu producto está muriendo frente al competidor." },
+        { q: "Estás calculando el LTV de un modelo de suscripción. El ARPU mensual es de $50 y el Churn Rate mensual es del 5%. Asumiendo un margen bruto del 80%, ¿cuál es el LTV real?", options: ["$800", "$1,000", "$50", "$250"], feedback: "Fórmula: LTV = (ARPU * Margen Bruto) / Churn. LTV = ($50 * 0.80) / 0.05 = $40 / 0.05 = $800." },
+        { q: "¿En qué consiste la técnica de 'Activation' conocida como el 'Aha! Moment'?", options: ["El punto exacto donde el usuario experimenta por primera vez de forma clara el valor central del producto.", "El momento en que el usuario introduce los datos de su tarjeta de crédito por primera vez.", "La recepción del correo electrónico de bienvenida tras el registro.", "Cuando el usuario califica a la app con 5 estrellas en las tiendas."], feedback: "El Aha! Moment es psicológico y conductual (ej: conectar 7 amigos en 10 días en Facebook); es cuando el usuario entiende internamente por qué necesita el producto." },
+        { q: "Tienes un presupuesto limitado y buscas optimizar el 'North Star Metric' de una plataforma de Delivery enfocado en 'Órdenes completadas por mes'. ¿Qué palanca de crecimiento priorizas?", options: ["Frecuencia de compra de los usuarios recurrentes (Retención).", "Adquisición de nuevos usuarios mediante cupones agresivos de un solo uso.", "Rediseño completo del logo de la marca corporativa.", "Campañas masivas de branding en televisión local."], feedback: "Aumentar la frecuencia de los que ya confían en ti (retención) es exponencialmente más barato y empuja de forma directa y orgánica la métrica estrella de uso recurrente." },
+        { q: "Si el ratio de conversión de tu Landing Page cae drásticamente del 5% al 2% justo después de lanzar una campaña masiva de influencers en TikTok, ¿cuál es la causa más probable?", options: ["La campaña atrajo tráfico de muy baja intención o desalineado con la propuesta de valor actual.", "El servidor web falló únicamente para los usuarios que venían orgánicos.", "El algoritmo de Meta penalizó tu cuenta publicitaria por usar videos verticales.", "Tu precio aumentó automáticamente debido a la alta demanda."], feedback: "Las campañas masivas de awareness suelen atraer volúmenes altos de tráfico curioso pero de baja conversión inicial, diluyendo la tasa de conversión global sin que signifique necesariamente que la landing esté rota." },
+        { q: "Para una startup B2B SaaS con un ACV (Annual Contract Value) de $50,000, ¿cuál es la estrategia de distribución (Go-To-Market) más eficiente?", options: ["Inside Sales / Enterprise Sales apoyado por Account-Based Marketing (ABM).", "Estrategia Product-Led Growth (PLG) 100% self-serve con anuncios de Instagram.", "Marketing de Afiliados a gran escala a través de micro-influencers.", "Estrategia viral basada en cupones de descuento por WhatsApp."], feedback: "Contratos de alto valor ($50k+) requieren intervención humana, confianza, demos técnicas y procesos corporativos robustos apoyados por ABM altamente calificado." },
+        { q: "¿Qué mide exactamente la métrica 'Viral Coefficient' (Factor K) en Growth?", options: ["El número promedio de nuevos usuarios registrados que genera cada usuario existente.", "La velocidad en milisegundos en que se comparte un post en redes sociales.", "El porcentaje de usuarios que abandonan la app debido a errores técnicos (bugs).", "La tasa de rebote combinada de todos tus canales orgánicos."], feedback: "Si un Factor K es > 1, significa que cada usuario trae a más de una persona, desatando un crecimiento verdaderamente exponencial y autosostenido." },
+        { q: "Tu app móvil sufre un cuello de botella: El 80% de los usuarios se registra, pero solo el 10% completa el onboarding guiado. ¿Qué experimento priorizarías?", options: ["Implementar un Onboarding progresivo eliminando pasos no esenciales y permitiendo la opción de 'Omitir' (Skip).", "Lanzar una campaña de email marketing de 15 pasos explicando la historia de la empresa.", "Aumentar el gasto publicitario en un 50% para compensar la pérdida de volumen.", "Cambiar la base de datos de SQL a NoSQL para mejorar la velocidad."], feedback: "Reducir la fricción directa en el punto exacto de la caída (drop-off) mediante onboarding progresivo suele ser el cambio con mayor impacto y menor costo de desarrollo." },
+        { q: "¿Qué diferencia fundamental hay entre Growth Marketing y el Marketing Tradicional?", options: ["Growth abarca todo el funnel de conversión (AARRR), mientras que el tradicional suele enfocarse solo en la parte superior (Awareness y Adquisición).", "Growth se enfoca exclusivamente en gastar menos presupuesto en anuncios de televisión.", "El marketing tradicional utiliza datos y el Growth se basa únicamente en la intuición de los creativos.", "Growth Marketing solo puede ser aplicado en empresas de software móvil."], feedback: "El Growth interviene en retención, monetización y referidos trabajando codo a codo con producto, rompiendo el silo tradicional de marketing que solo genera leads/tráfico." },
+        { q: "Si el Quick Ratio de tu SaaS es menor a 1 (ej: 0.8), ¿qué diagnóstico das a los inversores?", options: ["La empresa está perdiendo más ARR por Churn y Downgrades del que está ganando por nuevos clientes y Expansiones.", "El crecimiento de la compañía es excepcionalmente saludable y listo para la Serie A.", "El equipo técnico necesita optimizar las consultas de la API.", "El costo por lead en Paid Ads ha bajado considerablemente."], feedback: "Un Quick Ratio < 1 denota que la destrucción de valor (Churn + Contracción) supera a la creación de ingresos (New ARR + Expansion), lo que indica un negocio insostenible a largo plazo." },
+        { q: "¿Cuál es el riesgo de optimizar tus campañas de Paid Media basándote ciegamente en el ROAS (Return on Ad Spend) reportado por la plataforma?", options: ["Suele incluir conversiones asistidas e ingresos inflados debido a ventanas de atribución agresivas propias de la plataforma.", "Hará que las campañas dejen de gastar el presupuesto asignado de forma inmediata.", "El ROAS mide únicamente el costo por clic y no el valor monetario.", "Provoca una desconexión total con el equipo de soporte técnico."], feedback: "Plataformas como Meta o Google tienden a adjudicarse conversiones que habrían ocurrido de todos modos u optimizan para compras impulsivas que luego generan reembolsos altos." },
+        { q: "Analizas las cohortes de retención y notas que el 40% de los usuarios regresan consistentemente cada mes de forma indefinida. ¿Qué significa esto?", options: ["Has logrado estabilizar la curva de retención, demostrando un Product-Market Fit real para ese segmento.", "Debes cambiar de producto inmediatamente porque el 60% se fue.", "Estás cobrando muy poco dinero por las membresías.", "El modelo matemático está mal calculado pues la retención debe llegar a 100%."], feedback: "Una curva que se aplana horizontalmente, incluso en niveles como el 30% o 40%, indica que has encontrado un product-market fit sólido para un grupo de usuarios retenidos en el tiempo." },
+        { q: "En una estrategia de SEO, ¿qué se entiende por el concepto de 'Topic Clusters'?", options: ["Estructurar el contenido en torno a una página pilar central conectada con subpáginas específicas mediante enlaces internos.", "Comprar múltiples dominios web expirados con palabras clave exactas.", "Utilizar la etiqueta meta-keywords repetida 50 veces en el código fuente.", "Agrupar todas las imágenes del sitio web en una sola carpeta del servidor."], feedback: "Los clusters de contenido demuestran autoridad temática ante los motores de búsqueda modernos (como Google), ordenando la web de manera semántica e hiperconectada." },
+        { q: "Si tu meta es incrementar el 'Expansion Revenue' de tu SaaS, ¿en qué actividades debes enfocar tus experimentos?", options: ["Estrategias de Cross-selling, Upselling y venta de Add-ons a clientes que ya están activos.", "Lanzar anuncios en mercados internacionales donde la marca no es conocida.", "Optimizar los copies de los anuncios de búsqueda en Google Ads.", "Reducir la tasa de rechazo de tarjetas de crédito en la pasarela de pago."], feedback: "El Expansion Revenue se genera exclusivamente a partir de la base de clientes existentes que pagan más dinero que su tarifa base original a través de upgrades o productos cruzados." },
+        { q: "¿Qué define principalmente a un 'Hook' efectivo en la psicología del usuario aplicada a productos digitales (Modelo de Nir Eyal)?", options: ["Un disparador que lleva a una acción simple, seguido de una recompensa variable y una inversión del usuario.", "Un descuento del 90% que dura exactamente 5 minutos en pantalla.", "Un video introductorio obligatorio de 3 minutos de duración.", "Un banner flotante de color rojo brillante que no se puede cerrar."], feedback: "El modelo Hook (Disparador -> Acción -> Recompensa Variable -> Inversión) automatiza la creación de hábitos en la mente del consumidor mediante loops psicológicos continuos." },
+        { q: "Tienes un embudo de conversión lineal: Registro (100%) -> Configuración (50%) -> Primer Uso (15%) -> Compra (2%). ¿Dónde enfocarías tu primer sprint de experimentación?", options: ["Entre Configuración y Primer Uso, donde se pierde la mayor proporción relativa de usuarios activos (70% de caída).", "En el Registro, trayendo un 500% más de tráfico a la página de inicio.", "En la página de confirmación de compra, cambiando el diseño tipográfico.", "Creando un nuevo producto secundario para diversificar la oferta."], feedback: "Se ataca el paso del funnel con mayor fuga relativa y fricción destructiva. Pasar de 50% a 15% representa una pérdida masiva donde el usuario configuró el perfil pero abandonó antes de ver valor." },
+        { q: "Qué herramienta estadística te permite asegurar que las diferencias en un test de crecimiento no se deben a factores externos estacionales?", options: ["Establecer un grupo de control concurrente expuesto exactamente bajo las mismas condiciones de tiempo.", "Correr el test en semanas de vacaciones únicamente.", "Utilizar herramientas de Inteligencia Artificial para adivinar el resultado futuro.", "Comparar el mes de diciembre actual con el mes de julio del año anterior."], feedback: "Un grupo de control ejecutado al unísono garantiza que variables externas (ej. Black Friday, caídas de servidores globales) afecten por igual a ambas variantes, aislando la variable testeada." },
+        { q: "¿Por qué el Growth Marketing considera que la 'Retención' es más importante que la 'Adquisición'?", options: ["Porque si la retención es baja, estás vertiendo dinero en un balde roto, haciendo que el crecimiento sea costoso e insostenible.", "Porque adquirir clientes siempre es gratis si se utiliza correctamente el algoritmo de TikTok.", "La retención influye únicamente en el posicionamiento de marca orgánico en medios escritos.", "Es una afirmación falsa; la adquisición siempre aportará más valor neto al flujo de caja."], feedback: "De nada sirve optimizar canales de adquisición si los usuarios se van a los pocos días. Retener clientes estabiliza los ingresos y reduce el costo marginal de crecimiento a largo plazo." },
+        { q: "Si tu producto SaaS implementa cobros automáticos anuales y experimentas un alto volumen de cancelaciones involuntarias, ¿qué solución de ingeniería de crecimiento aplicas?", options: ["Implementar un sistema automatizado de Dunning (reintentos inteligentes de cobro y correos de actualización de tarjeta).", "Eliminar por completo los planes anuales y forzar planes semanales en efectivo.", "Contratar un call center externo que llame a los clientes por las noches.", "Bloquear permanentemente las cuentas de los usuarios al primer fallo."], feedback: "El Churn Involuntario (fallos de tarjetas, expiración de plásticos) se combate eficazmente con lógicas de dunning automatizado, pasarelas de respaldo y notificaciones pre-vencimiento." },
+        { q: "Estás calculando la métrica 'Net Revenue Retention' (NRR). Si tu NRR es del 115% de forma consistente, ¿qué indica sobre tu modelo de negocio?", options: ["Que el crecimiento de tu base de clientes actuales compensa con creces cualquier pérdida por Churn, logrando un crecimiento orgánico interno.", "Que tu contabilidad está duplicando facturas por error.", "Que estás perdiendo el 15% de tus clientes premium en cada trimestre de operaciones.", "Que debes apagar el presupuesto de adquisición de inmediato."], feedback: "Un NRR > 100% es el santo grial de las startups SaaS (Retención de Ingresos Neta Positiva); significa que el dinero de tus clientes actuales crece por sí mismo año tras año gracias a expansiones." },
+        { q: "Al auditar una cuenta publicitaria, notas que el CTR disminuye progresivamente semana a semana mientras que las frecuencias de impresión suben a más de 6. ¿Qué fenómeno ocurre?", options: ["Fatiga del anuncio (Ad Fatigue); tu audiencia objetivo ya ha visto el mismo creativo demasiadas veces.", "El presupuesto asignado a la campaña es demasiado bajo para competir en la subasta.", "La landing page de destino ha dejado de funcionar correctamente.", "El algoritmo de subasta está beneficiando injustamente a tu competencia."], feedback: "Cuando la frecuencia sube demasiado rápido y el rendimiento baja, la audiencia sufre saturación visual ante la misma pieza publicitaria, exigiendo una renovación urgente de creativos." },
+        { q: "Qué tipo de datos te otorgan mayor ventaja competitiva defensible a largo plazo en una estrategia de Growth Data Framework?", options: ["First-Party Data y Zero-Party Data recolectados directamente por tus sistemas y mediante preferencias explícitas compartidas por tus usuarios.", "Third-Party Data comprados a proveedores de bases de datos masivas del mercado informal.", "Reportes genéricos en PDF descargados de blogs públicos del sector.", "Datos agregados provistos de forma estimada por plataformas de la competencia."], feedback: "Los datos de origen propio (First/Zero Party) son imposibles de replicar por competidores, respetan las leyes de privacidad modernas y reflejan el comportamiento real exacto de tu cliente." },
+        { q: "Si utilizas la metodología 'ICE Score' para priorizar tu backlog de experimentos de Growth, ¿cuáles son las tres variables que promedias o multiplicas?", options: ["Impact (Impacto), Confidence (Confianza), Ease (Facilidad de ejecución).", "Investment (Inversión), Cost (Costo), Efficiency (Eficiencia).", "Insights (Hallazgos), Customers (Clientes), Engagement (Interacción).", "Innovation (Innovación), Creativity (Creatividad), Execution (Ejecución)."], feedback: "El framework ICE califica del 1 al 10 el Impacto estimado, la Confianza en el resultado y la Facilidad técnica para priorizar de forma matemática qué iniciativas ejecutar primero." },
+        { q: "Un canal de marketing te entrega un CAC bajo y un volumen alto de leads, pero el 'Lead-to-Opportunity' Conversion Rate es cercano a cero. Como Growth Manager, ¿cuál es tu conclusión?", options: ["El canal sufre de problemas graves de calidad; estás pagando por volumen inútil (Métricas de Vanidad) que satura y frustra a tu equipo de ventas.", "Debes duplicar el presupuesto de ese canal de forma inmediata para forzar ventas.", "El problema reside en que el servidor web se satura por exceso de registros nocturnos.", "El producto debe rediseñarse por completo desde cero para ajustarse a esos leads."], feedback: "Costos de adquisición bajos en leads que no cualifican representan un desperdicio operativo. Es una métrica de vanidad que genera fricción masiva entre marketing y ventas (MQLs vs SQLs)." }
+    ];
+
+    let selectedQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answeredQuestionsCount = 0;
+
+    // Función útil para barajar arrays (Algoritmo Fisher-Yates)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startNewRound() {
+        // 1. Ocultar paneles de resultados y mostrar el quiz
+        document.getElementById('results-ui').style.display = 'none';
+        document.getElementById('quiz-ui').style.display = 'block';
+
+        // 2. Reiniciar variables de control
+        currentQuestionIndex = 0;
+        score = 0;
+        answeredQuestionsCount = 0;
+
+        // 3. Selección ALEATORIA de 30 preguntas del pool maestro
+        // (En este script base hay 30 preguntas exactas de nivel gerencial. Al expandir el pool, elegirá 30 al azar)
+        let shuffledMaster = shuffleArray([...masterQuestionBank]);
+        selectedQuestions = shuffledMaster.slice(0, 30);
+
+        // 4. Cargar la primera pregunta
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        // Resetear UI de feedback y deshabilitar botón siguiente
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('btn-next').disabled = true;
+
+        const currentQuestion = selectedQuestions[currentQuestionIndex];
+        
+        // Actualizar Meta-info y barra de progreso
+        document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de 30`;
+        const progressPercent = (currentQuestionIndex / 30) * 100;
+        document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+        document.getElementById('score-live').innerText = `Puntuación: ${answeredQuestionsCount > 0 ? Math.round((score / answeredQuestionsCount) * 100) : 0}%`;
+
+        // Renderizar Texto de la Pregunta
+        document.getElementById('question-text').innerText = currentQuestion.q;
+
+        // Mezclar las opciones de respuesta de forma aleatoria para romper patrones
+        const correctText = currentQuestion.options[0]; // La primera siempre es la correcta por arquitectura
+        let rawOptions = [...currentQuestion.options];
+        let shuffledOptions = shuffleArray(rawOptions);
+
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+
+        shuffledOptions.forEach(optionText => {
+            const button = document.createElement('button');
+            button.className = 'option-btn';
+            button.innerText = optionText;
+            button.onclick = () => checkAnswer(button, optionText, correctText, currentQuestion.feedback);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selectedButton, chosenText, correctText, explanation) {
+        answeredQuestionsCount++;
+        const container = document.getElementById('options-container');
+        const buttons = container.getElementsByClassName('option-btn');
+
+        // Deshabilitar todos los botones una vez que se responde
+        for (let btn of buttons) {
+            btn.disabled = true;
+            // Resaltar la respuesta correcta de fondo de forma transparente o marcarla si no se eligió
+            if (btn.innerText === correctText) {
+                btn.classList.add('correct');
+            }
+        }
+
+        // Verificar si la respuesta elegida fue la correcta
+        if (chosenText === correctText) {
+            score++;
+            selectedButton.classList.add('correct');
+        } else {
+            selectedButton.classList.add('incorrect');
+        }
+
+        // Mostrar Feedback detallado / Explicación analítica
+        const feedbackBox = document.getElementById('feedback');
+        feedbackBox.style.display = 'block';
+        feedbackBox.innerHTML = `<strong>${chosenText === correctText ? '✓ ¡Correcto!' : '✗ Incorrecto'}</strong><br><p style="margin: 5px 0 0 0; font-size:0.9rem;">${explanation}</p>`;
+
+        // Actualizar Puntuación en vivo
+        document.getElementById('score-live').innerText = `Puntuación: ${Math.round((score / 30) * 100)}%`;
+        
+        // Habilitar botón de avanzar
+        document.getElementById('btn-next').disabled = false;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < 30 && currentQuestionIndex < selectedQuestions.length) {
+            renderQuestion();
+        } else {
+            showFinalResults();
+        }
+    }
+
+    function showFinalResults() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('results-ui').style.display = 'block';
+
+        const finalPercent = Math.round((score / 30) * 100);
+        const scoreElement = document.getElementById('final-score');
+        scoreElement.innerText = `${finalPercent}%`;
+
+        let msg = "";
+        if (finalPercent >= 90) {
+            msg = "🔥 ¡Nivel VP of Growth / CMO! Dominas la economía unitaria, entiendes el equilibrio entre experimentación y data, y sabes cómo escalar de manera sostenible sin romper la caja.";
+        } else if (finalPercent >= 70) {
+            msg = "🚀 Senior Growth Manager. Tienes conceptos sólidos de embudos y analítica, solo te falta afilar el instinto en lógicas complejas de retención o modelos de atribución cruzada.";
+        } else {
+            msg = "📈 Growth Marketer Intermedio. Buen conocimiento técnico básico, pero necesitas profundizar más en la optimización integral del funnel (AARRR) y no descuidar la retención por sobre la adquisición.";
+        }
+        document.getElementById('performance-feedback').innerText = msg;
+    }
+
+    // Arrancar la primera ronda de forma automática al cargar la página
+    window.onload = startNewRound;
+</script>
+
+</body>
+</html>
